@@ -21,6 +21,10 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt 
 
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+
 class lungData(Dataset):
     
     def __init__(self,args,im_list,masks_list, labels = [],transform = None,im_type = 'RGB'):
@@ -32,10 +36,10 @@ class lungData(Dataset):
         self.num_classes = args.num_classes
         self.one_hot = args.one_hot
         self.transform_img = transform
-        self.transform_mask = trans.Compose([
-        trans.Resize(args.im_dim),
-        trans.ToTensor(),
-        trans.Normalize(mean=(0.456), std=(0.224))
+        self.transform_mask = A.Compose([
+        A.Resize(args.im_dim[0],args.im_dim[1]),
+        A.Normalize(mean=(0.456), std=(0.225)),
+        ToTensorV2(),
         ])
         
         assert im_type in ['RGB','L']
@@ -52,9 +56,9 @@ class lungData(Dataset):
         # print('getitem -- self.transform:',bool(self.transform))
         if(self.transform_img):
             # print("getitem -- in self.transform loop: ")
-            im = self.transform_img(im)
+            im = self.transform_img(image=np.array(im))['image']
         if(self.transform_mask):
-            mask = self.transform_mask(mask)
+            mask = self.transform_mask(image =np.array(mask))['image']
             # print('getitem -- im.shape', im)
 
         # print("getitem -- transform complet succesfully, idx:" ,idx)
@@ -71,10 +75,10 @@ class lungData(Dataset):
     
 def create_dataloaders(args):
     
-    transforms = trans.Compose([
-        trans.Resize(args.im_dim),
-        trans.ToTensor(),
-        trans.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+    transforms = A.Compose([
+        A.Resize(args.im_dim[0],args.im_dim[1]),
+        A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        ToTensorV2(),
         ])
     # print('args.im_dim:',args.im_dim)
     
